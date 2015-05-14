@@ -40,30 +40,12 @@ WebtudorGame.Boot.prototype = {
 		player = {
 			state: 'idle',
 			stateChanged: false,
-			direction: {
-				horizontal: '',
-				vertical: 'down',
-				changed: false
-			},
-			changeHorizontalDirection: function(direction) {
-				if (player.direction.horizontal != direction) {
-					player.direction.horizontal = direction;
-
-					//Reset vertical
-					player.direction.vertical = '';
-
-					player.direction.changed = true;
-				}
-			},
-			changeVerticalDirection: function(direction) {
-				if (player.direction.vertical != direction) {
-					// Reset horizontal
-					if (!player.direction.changed) {
-						player.direction.horizontal = '';
-					}
-
-					player.direction.vertical = direction;
-					player.direction.changed = true;
+			direction: '',
+			directionChanged: false,
+			changeDirection: function(direction) {
+				if (player.direction != direction) {
+					player.direction = direction;
+					player.directionChanged = true;
 				}
 			},
 			changeState: function(state) {
@@ -85,8 +67,8 @@ WebtudorGame.Boot.prototype = {
 				player.sprite.animations.add('death-' + directions[i], Phaser.Animation.generateFrameNames('warrior/death/' + directions[i] + '/', 0, 14, 2), 5, true);
 			}
 		}
-		player.sprite.animations.play(player.state + '-down');
-
+		player.direction = 'down';
+		player.sprite.animations.play(player.state + '-' + player.direction);
 		player.sprite.anchor.set = 0.5;
 		game.physics.isoArcade.enable(player.sprite);
 		player.sprite.body.collideWorldBounds = true;
@@ -96,20 +78,38 @@ WebtudorGame.Boot.prototype = {
 		var speed = 100;
 		if (this.cursors.up.isDown) {
 			player.sprite.body.velocity.y = -speed;
-			player.changeVerticalDirection('up');
+
+			if (this.cursors.left.isDown) {
+				player.changeDirection('upleft');
+			} else if (this.cursors.right.isDown) {
+				player.changeDirection('upright');
+			} else {
+				player.changeDirection('up');
+			}
 		} else if (this.cursors.down.isDown) {
 			player.sprite.body.velocity.y = speed;
-			player.changeVerticalDirection('down');
+
+			if (this.cursors.left.isDown) {
+				player.changeDirection('downleft');
+			} else if (this.cursors.right.isDown) {
+				player.changeDirection('downright');
+			} else {
+				player.changeDirection('down');
+			}
 		} else {
 			player.sprite.body.velocity.y = 0;
+
+			if (this.cursors.left.isDown) {
+				player.changeDirection('left');
+			} else if (this.cursors.right.isDown) {
+				player.changeDirection('right');
+			}
 		}
 
 		if (this.cursors.left.isDown) {
 			player.sprite.body.velocity.x = -speed;
-			player.changeHorizontalDirection('left');
 		} else if (this.cursors.right.isDown) {
 			player.sprite.body.velocity.x = speed;
-			player.changeHorizontalDirection('right');
 		} else {
 			player.sprite.body.velocity.x = 0;
 		}
@@ -120,9 +120,10 @@ WebtudorGame.Boot.prototype = {
 			player.changeState('walk');
 		}
 
-		if (player.direction.changed || player.stateChanged) {
-			player.sprite.animations.play(player.state + '-' + player.direction.vertical + player.direction.horizontal);
-			player.direction.changed = false;
+		if (player.directionChanged || player.stateChanged) {
+			console.log('Changing animation: ' + player.state + '-' + player.direction);
+			player.sprite.animations.play(player.state + '-' + player.direction);
+			player.directionChanged = false;
 			player.stateChanged = false;
 		}
 
